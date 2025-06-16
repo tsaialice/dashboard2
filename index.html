@@ -5,6 +5,8 @@
   <title>調查結果互動式報表</title>
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- DataLabels Plugin CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
     .chart-container { width: 45%; display: inline-block; vertical-align: top; margin: 2%; }
@@ -60,6 +62,9 @@
 
 
 <script>
+  // 註冊 DataLabels 外掛
+  Chart.register(ChartDataLabels);
+
   // 部門資料
   const deptLabels = ["機械","工程","財務","資材","電控","業務","研發部","浩氣研發","研發"];
   const deptData   = [11,7,4,3,3,3,2,1,1];
@@ -135,36 +140,68 @@
   ];
   const issData   = [15,11,10,6,1,1,1,1,1,1,1];
 
-  // 繪製圖表
-  function makeBarChart(ctxId, labels, data, horizontal=false) {
-    const ctx = document.getElementById(ctxId).getContext('2d');
-    new Chart(ctx, {
-      type: horizontal ? 'bar' : 'bar',
-      data: { labels, datasets: [{ label: '', data }] },
-      options: {
-        indexAxis: horizontal ? 'y' : 'x',
-        responsive: true,
-        plugins: { legend: { display: false }, tooltip: { enabled: true } }
-      }
-    });
+  // 通用：計算總和
+  function sum(data) {
+    return data.reduce((a, b) => a + b, 0);
   }
 
+  // 建立圓餅圖並顯示百分比
   function makePieChart(ctxId, labels, data) {
-    const ctx = document.getElementById(ctxId).getContext('2d');
-    new Chart(ctx, {
-      type: 'pie',
-      data: {
-        labels,
-        datasets: [{ data }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { position: 'right' }, tooltip: { enabled: true } }
+    const total = sum(data);
+    new Chart(
+      document.getElementById(ctxId).getContext('2d'),
+      {
+        type: 'pie',
+        data: { labels, datasets: [{ data }] },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'right' },
+            tooltip: { enabled: true },
+            datalabels: {
+              color: '#000',
+              formatter: (value) => {
+                const pct = (value / total * 100).toFixed(1);
+                return `${pct}%`;
+              },
+              font: { weight: 'bold', size: 12 }
+            }
+          }
+        }
       }
-    });
+    );
   }
 
-  // 呼叫
+  // 建立長條圖並顯示數字
+  function makeBarChart(ctxId, labels, data, horizontal = false) {
+    new Chart(
+      document.getElementById(ctxId).getContext('2d'),
+      {
+        type: 'bar',
+        data: { labels, datasets: [{ label: '數量', data }] },
+        options: {
+          indexAxis: horizontal ? 'y' : 'x',
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: true },
+            datalabels: {
+              anchor: 'end',
+              align: 'top',
+              color: '#000',
+              formatter: (value) => value,
+              font: { weight: 'bold', size: 10 }
+            }
+          },
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      }
+    );
+  }
+
+  // 繪圖呼叫
   makeBarChart('deptChart', deptLabels, deptData);
   makePieChart('freqChart', freqLabels, freqData);
   makePieChart('familiarityChart', famLabels, famData);
@@ -172,7 +209,6 @@
   makePieChart('continueChart', conLabels, conData);
   makeBarChart('featuresChart', featLabels, featData, true);
   makeBarChart('issuesChart', issLabels, issData, true);
-
 </script>
 
 </body>
