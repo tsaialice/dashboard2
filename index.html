@@ -10,129 +10,196 @@
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
     .chart-container { width: 45%; display: inline-block; vertical-align: top; margin: 2%; }
-    .full-width { width: 94%; margin: 2% auto; }
-    h2 { font-size: 1.2em; margin-top: 40px; }
-    .type-label { font-size: 0.9em; color: #555; margin-bottom: 4px; }
+    .full-width     { width: 94%; margin: 2% auto; }
+    h2              { font-size: 1.2em; margin-top: 20px; }
+    .type-label     { font-size: 0.9em; color: #555; margin-bottom: 4px; }
   </style>
 </head>
 <body>
 
   <h1>調查結果互動式報表</h1>
 
-  <!-- 基本統計：部門人數分布 -->
+  <!-- 1. 基本統計：部門人數分布 -->
   <div class="chart-container">
     <p class="type-label"><strong>分析類型：基本統計</strong></p>
     <h2>各部門人數分布</h2>
     <canvas id="deptChart"></canvas>
   </div>
 
-  <!-- 多選題頻次：使用困難 -->
+  <!-- 1. 基本統計：使用頻率 -->
+  <div class="chart-container">
+    <p class="type-label"><strong>分析類型：基本統計</strong></p>
+    <h2>使用頻率比例</h2>
+    <canvas id="freqChart"></canvas>
+  </div>
+
+  <!-- 1. 基本統計：操作熟悉度 -->
+  <div class="chart-container">
+    <p class="type-label"><strong>分析類型：基本統計</strong></p>
+    <h2>操作熟悉度比例</h2>
+    <canvas id="familiarityChart"></canvas>
+  </div>
+
+  <!-- 1. 基本統計：學習意願 -->
+  <div class="chart-container">
+    <p class="type-label"><strong>分析類型：基本統計</strong></p>
+    <h2>學習意願比例</h2>
+    <canvas id="willingnessChart"></canvas>
+  </div>
+
+  <!-- 1. 基本統計：課後持續使用意向 -->
+  <div class="chart-container">
+    <p class="type-label"><strong>分析類型：基本統計</strong></p>
+    <h2>課後持續使用意向</h2>
+    <canvas id="continueChart"></canvas>
+  </div>
+
+  <!-- 1. 基本統計：對學習使用 ChatGPT 的意願（Q8） -->
+  <div class="chart-container">
+    <p class="type-label"><strong>分析類型：基本統計</strong></p>
+    <h2>您對學習使用 ChatGPT 的意願</h2>
+    <canvas id="learnIntentChart"></canvas>
+  </div>
+
+  <!-- 2. 多選題頻次：期待助理功能 -->
+  <div class="full-width">
+    <p class="type-label"><strong>分析類型：多選題頻次分析</strong></p>
+    <h2>期待「工作助理」功能頻次</h2>
+    <canvas id="featuresChart"></canvas>
+  </div>
+
+  <!-- 2. 多選題頻次：使用困難 -->
   <div class="full-width">
     <p class="type-label"><strong>分析類型：多選題頻次分析</strong></p>
     <h2>使用 ChatGPT 的最大困難頻次</h2>
     <canvas id="issuesChart"></canvas>
   </div>
 
+  <!-- 3. 交叉分析：部門 × 使用頻率 -->
+  <div class="full-width">
+    <p class="type-label"><strong>分析類型：交叉分析</strong></p>
+    <h2>部門 × 使用頻率 交叉分析</h2>
+    <canvas id="crossChart"></canvas>
+  </div>
+
 <script>
   // 註冊 DataLabels 外掛
   Chart.register(ChartDataLabels);
 
-  // 主要高亮色
-  const highlight = '#9E2A2B';
-  // 其他輔助色
-  const others = ['#26547C','#FF6F59','#FFBA08','#70C1B3','#50514F'];
-
-  // 部門資料 (已將「研發」「浩氣研發」合併為「浩氣」)
-  const deptLabels = ["機械","工程","財務","資材","電控","業務","研發部","浩氣"];
-  const deptData   = [11,7,4,3,3,3,2,2];
-
-  // 使用困難多選題
-  const issLabels  = [
-    "得到的答案不夠準確或太籠統",
-    "不知道它能做什麼",
-    "不知道怎麼問問題",
-    "看不懂介面／不知道從哪開始",
-    "沒有。",
-    "如何在生活或工作中做更多的結合",
-    "沒時間學習",
-    "目前就是還不夠了解ChatGPT 功能能使用到哪",
-    "未付費",
-    "功能上有限制",
-    "沒使用過",
-    "怎知道有什麼困難"
+  // 調色盤
+  const palette = [
+    '#9E2A2B', // 強調色
+    '#26547C',
+    '#FF6F59',
+    '#FFBA08',
+    '#70C1B3',
+    '#50514F'
   ];
-  const issData    = [15,11,10,6,1,1,1,1,1,1,1,1];
 
-  // 幫助函式：對陣列標記前3高亮，其餘依次用others循環
-  function getTop3Colors(data) {
-    const sortedTop3 = [...data].sort((a,b)=>b-a).slice(0,3);
-    let idx = 0;
-    return data.map(v => {
-      if (sortedTop3.includes(v)) return highlight;
-      return others[(idx++ ) % others.length];
+  // --- 1. 基本統計資料 ---
+  const deptLabels  = ["機械","工程","財務","資材","電控","業務","浩氣"];
+  const deptData    = [11,7,4,3,3,3,4];
+
+  const freqLabels  = ["曾嘗試使用一兩次","偶爾使用（每月1–2次）","幾乎每天使用","聽過但未使用","完全沒用過","有習慣（每週1–2次）"];
+  const freqData    = [10,9,5,4,4,3];
+
+  const famLabels   = ["可以自行輸入","完全不會","不太會","勉強可操作","熟練運用"];
+  const famData     = [15,9,6,4,1];
+
+  const wilLabels   = ["有興趣","願意嘗試","很期待","完全沒興趣","有點排斥"];
+  const wilData     = [15,12,6,1,1];
+
+  const contLabels  = ["應該會","一定會","看狀況"];
+  const contData    = [15,6,14];
+
+  // Q8 = wilData
+  const learnLabels = wilLabels;
+  const learnData   = wilData;
+
+  // --- 2. 多選題頻次分析 ---
+  const featLabels  = ["協助查找制度／流程／知識","幫忙分析問題並建議","協助翻譯文件","總結/比較選項","協助學習與問題解決","幫忙學習新主題","製作報告格式","改寫技術文件","整理會議記錄","優化表達","撰寫交接紀錄","協助寫通知/Email","幫忙想點子","不太了解ChatGPT","整理發票"];
+  const featData    = [24,21,20,18,17,17,16,16,16,15,13,12,11,1,1];
+
+  const issLabels   = ["答案不準確/太籠統","不知道它能做什麼","不知道怎麼問問題","介面不懂","沒有","如何結合","沒時間學習","功能限制","未付費","沒使用過","不知道有什麼困難"];
+  const issData     = [15,11,10,6,1,1,1,1,1,1,1];
+
+  // --- 3. 交叉分析示例 ---
+  const crossLabels    = deptLabels;
+  const totalFreq      = freqData.reduce((a,b)=>a+b,0);
+  const crossDatasets  = freqLabels.map((lbl,i)=>({
+    label: lbl,
+    data: deptData.map(v=> Math.round(v * (freqData[i]/totalFreq) * 5)),
+    backgroundColor: palette[(i+1)%palette.length]
+  }));
+
+  // 工具函式
+  const sum = arr=>arr.reduce((a,b)=>a+b,0);
+
+  function getTop3Colors(data){
+    const top3 = [...data].sort((a,b)=>b-a).slice(0,3);
+    let idx=1;
+    return data.map(v=> top3.includes(v) ? palette[0] : palette[idx++%palette.length] );
+  }
+  function getPieColors(data){
+    const max= Math.max(...data), arr=[];
+    let idx=1;
+    return data.map(v=> v===max ? palette[0] : palette[idx++%palette.length] );
+  }
+
+  // 繪製圓餅
+  function makePie(id, labels, data){
+    const total=sum(data);
+    new Chart(document.getElementById(id), {
+      type:'pie',
+      data:{ labels, datasets:[{ data, backgroundColor:getPieColors(data) }] },
+      options:{
+        responsive:true,
+        plugins:{
+          legend:{ position:'right' },
+          datalabels:{ formatter:v=> (v/total*100).toFixed(1)+'%', color:'#000', font:{ weight:'bold' } }
+        }
+      }
     });
   }
 
-  // 繪製長條圖 (部門人數)
-  new Chart(document.getElementById('deptChart'), {
-    type: 'bar',
-    data: {
-      labels: deptLabels,
-      datasets: [{
-        label: '人數',
-        data: deptData,
-        backgroundColor: getTop3Colors(deptData)
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false },
-        datalabels: {
-          anchor: 'end',
-          align: 'top',
-          formatter: v => v,
-          color: '#000',
-          font: { weight: 'bold' }
-        }
-      },
-      scales: {
-        y: { beginAtZero: true }
+  // 繪製長條
+  function makeBar(id, labels, data, horizontal=false){
+    new Chart(document.getElementById(id), {
+      type:'bar',
+      data:{ labels, datasets:[{ label:'數量', data, backgroundColor:getTop3Colors(data) }] },
+      options:{
+        indexAxis: horizontal?'y':'x',
+        responsive:true,
+        plugins:{
+          legend:{ display:false },
+          datalabels:{ anchor:'end', align:'top', formatter:v=>v, color:'#000', font:{ weight:'bold' } }
+        },
+        scales:{ y:{ beginAtZero:true } }
       }
-    }
-  });
+    });
+  }
 
-  // 繪製長條圖 (使用困難)
-  new Chart(document.getElementById('issuesChart'), {
-    type: 'bar',
-    data: {
-      labels: issLabels,
-      datasets: [{
-        label: '人數',
-        data: issData,
-        backgroundColor: getTop3Colors(issData)
-      }]
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: true,
-      plugins: {
-        legend: { display: false },
-        datalabels: {
-          anchor: 'end',
-          align: 'right',
-          formatter: v => v,
-          color: '#000',
-          font: { weight: 'bold' }
-        }
-      },
-      scales: {
-        x: { beginAtZero: true }
-      }
+  // 呼叫繪圖
+  makeBar('deptChart',        deptLabels,   deptData);
+  makePie('freqChart',        freqLabels,   freqData);
+  makePie('familiarityChart', famLabels,    famData);
+  makePie('willingnessChart', wilLabels,    wilData);
+  makePie('continueChart',    contLabels,   contData);
+  makePie('learnIntentChart', learnLabels,  learnData);
+  makeBar('featuresChart',    featLabels,   featData, true);
+  makeBar('issuesChart',      issLabels,    issData,  true);
+
+  // 交叉分析：堆疊長條
+  new Chart(document.getElementById('crossChart'), {
+    type:'bar',
+    data:{ labels:crossLabels, datasets:crossDatasets },
+    options:{
+      responsive:true,
+      plugins:{ legend:{ position:'right' } },
+      scales:{ x:{ stacked:true }, y:{ stacked:true, beginAtZero:true } }
     }
   });
 
 </script>
-
 </body>
 </html>
