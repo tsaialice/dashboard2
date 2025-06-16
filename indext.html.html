@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>調查結果互動式報表</title>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .chart-container { width: 45%; display: inline-block; vertical-align: top; margin: 2%; }
+    .full-width { width: 94%; margin: 2% auto; }
+    h2 { font-size: 1.2em; margin-top: 40px; }
+  </style>
+</head>
+<body>
+
+  <h1>調查結果互動式報表</h1>
+
+  <!-- 部門人數分布 -->
+  <div class="chart-container">
+    <h2>各部門人數分布</h2>
+    <canvas id="deptChart"></canvas>
+  </div>
+
+  <!-- 使用頻率圓餅圖 -->
+  <div class="chart-container">
+    <h2>使用頻率比例</h2>
+    <canvas id="freqChart"></canvas>
+  </div>
+
+  <!-- 操作熟悉度圓餅圖 -->
+  <div class="chart-container">
+    <h2>操作熟悉度比例</h2>
+    <canvas id="familiarityChart"></canvas>
+  </div>
+
+  <!-- 學習意願圓餅圖 -->
+  <div class="chart-container">
+    <h2>學習意願比例</h2>
+    <canvas id="willingnessChart"></canvas>
+  </div>
+
+  <!-- 課後持續使用意向圓餅圖 -->
+  <div class="chart-container">
+    <h2>課後持續使用意向比例</h2>
+    <canvas id="continueChart"></canvas>
+  </div>
+
+  <!-- 期待助理功能 水平長條圖 -->
+  <div class="full-width">
+    <h2>期待「工作助理」功能頻次</h2>
+    <canvas id="featuresChart"></canvas>
+  </div>
+
+  <!-- 使用困難 水平長條圖 -->
+  <div class="full-width">
+    <h2>使用 ChatGPT 的最大困難頻次</h2>
+    <canvas id="issuesChart"></canvas>
+  </div>
+
+
+<script>
+  // 部門資料
+  const deptLabels = ["機械","工程","財務","資材","電控","業務","研發部","浩氣研發","研發"];
+  const deptData   = [11,7,4,3,3,3,2,1,1];
+
+  // 使用頻率
+  const freqLabels = [
+    "曾經嘗試使用一兩次",
+    "偶爾使用（每月 1～2 次）",
+    "幾乎每天使用",
+    "聽過但未使用",
+    "完全沒用過",
+    "有使用習慣（每週 1～2 次以上）"
+  ];
+  const freqData   = [10,9,5,4,4,3];
+
+  // 操作熟悉度
+  const famLabels = [
+    "可以自行輸入並得到結果",
+    "完全不會",
+    "不太會",
+    "勉強可以操作",
+    "可熟練並靈活運用"
+  ];
+  const famData   = [15,9,6,4,1];
+
+  // 學習意願
+  const wilLabels = [
+    "有興趣，希望能用在工作",
+    "願意嘗試看看",
+    "很期待，想深入學習",
+    "完全沒興趣",
+    "有點排斥但願意聽"
+  ];
+  const wilData   = [15,12,6,1,1];
+
+  // 課後持續使用意向
+  const conLabels = ["應該會","看狀況","一定會"];
+  const conData   = [15,14,6];
+
+  // 期待助理功能
+  const featLabels = [
+    "協助查找制度／流程／知識",
+    "幫忙分析問題並建議",
+    "協助翻譯文件",
+    "幫忙總結或比較選項",
+    "協助學習與問題解決",
+    "幫忙學習不熟主題",
+    "製作標準報告格式",
+    "改寫技術文件通俗化",
+    "整理會議紀錄／摘要",
+    "優化表達更通順",
+    "撰寫交接紀錄／流程",
+    "協助寫通知／Email",
+    "幫忙想點子",
+    "不是很了解ChatGPT",
+    "整理月底發票"
+  ];
+  const featData   = [24,21,20,18,17,17,16,16,16,15,13,12,11,1,1];
+
+  // 使用困難
+  const issLabels = [
+    "答案不夠準確／太籠統",
+    "不知道它能做什麼",
+    "不知道怎麼問問題",
+    "介面不懂／不知道從哪開始",
+    "沒有",
+    "如何結合工作／生活",
+    "沒時間學習",
+    "功能限制",
+    "未付費",
+    "沒使用過",
+    "不知道有什麼困難"
+  ];
+  const issData   = [15,11,10,6,1,1,1,1,1,1,1];
+
+  // 繪製圖表
+  function makeBarChart(ctxId, labels, data, horizontal=false) {
+    const ctx = document.getElementById(ctxId).getContext('2d');
+    new Chart(ctx, {
+      type: horizontal ? 'bar' : 'bar',
+      data: { labels, datasets: [{ label: '', data }] },
+      options: {
+        indexAxis: horizontal ? 'y' : 'x',
+        responsive: true,
+        plugins: { legend: { display: false }, tooltip: { enabled: true } }
+      }
+    });
+  }
+
+  function makePieChart(ctxId, labels, data) {
+    const ctx = document.getElementById(ctxId).getContext('2d');
+    new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels,
+        datasets: [{ data }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'right' }, tooltip: { enabled: true } }
+      }
+    });
+  }
+
+  // 呼叫
+  makeBarChart('deptChart', deptLabels, deptData);
+  makePieChart('freqChart', freqLabels, freqData);
+  makePieChart('familiarityChart', famLabels, famData);
+  makePieChart('willingnessChart', wilLabels, wilData);
+  makePieChart('continueChart', conLabels, conData);
+  makeBarChart('featuresChart', featLabels, featData, true);
+  makeBarChart('issuesChart', issLabels, issData, true);
+
+</script>
+
+</body>
+</html>
